@@ -1,5 +1,6 @@
 using ManagedCuda.BasicTypes;
 using NAudio.Wave;
+using System.Drawing.Drawing2D;
 using System.Text;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -8,6 +9,8 @@ namespace WAV_CUDA
 	public partial class Window_Main : Form
 	{
 		// Attributes
+		public string Repopath = "";
+
 		public CudaHandling CuH = new();
 		public AudioHandling AuH = new();
 
@@ -16,6 +19,9 @@ namespace WAV_CUDA
 		public Window_Main()
 		{
 			InitializeComponent();
+
+			// Set Repopath
+			SetRepopath();
 
 			// Dispose CuH & ReloadDevices()
 			CuH.Dispose();
@@ -27,10 +33,63 @@ namespace WAV_CUDA
 			UpdateWaveViewers();
 			UpdateInitLabel();
 			ToggleButtons("auto");
+
+			// Set banner and cover to icon (color) + icon
+			pictureBox_cover.Image = Image.FromFile(Repopath + @"\Resources\nvidia.bmp");
+			pictureBox_banner.BackColor = Color.FromArgb(255, 118, 185, 0);
+
+			// Set icon to icon
+			//Icon = new Icon(Repopath + @"\Resources\icon.ico");
+
+			// Draw gradient background nvidia green -> white per draw event
+			// Paint += Window_Main_Paint;
+
+		}
+
+		// Draw event
+		private void Window_Main_Paint(object? sender, PaintEventArgs e)
+		{
+			Graphics g = e.Graphics;
+
+			// Fenstergröße ermitteln
+			int windowWidth = this.ClientSize.Width;
+			int windowHeight = this.ClientSize.Height;
+
+			// Postgelb definieren
+			Color postgelb = Color.FromArgb(118, 185, 0);
+
+			// Bereich für oberen 1/5 festlegen
+			int upperHeight = windowHeight / 5;
+			Rectangle upperRect = new(0, 0, windowWidth, upperHeight);
+
+			// Bereich mit solidem Postgelb füllen
+			using (Brush solidBrush = new SolidBrush(postgelb))
+			{
+				g.FillRectangle(solidBrush, upperRect);
+			}
+
+			// Bereich für unteren 4/5 festlegen
+			Rectangle lowerRect = new(0, upperHeight, windowWidth, windowHeight - upperHeight);
+
+			// Gradient von Postgelb nach Transparent erstellen
+			using LinearGradientBrush gradientBrush = new(
+				lowerRect,
+				postgelb, // Startfarbe
+				Color.Transparent, // Endfarbe
+				LinearGradientMode.Vertical // Vertikaler Verlauf
+			);
+			g.FillRectangle(gradientBrush, lowerRect);
 		}
 
 
 		// Methods
+		public string SetRepopath()
+		{
+			string path = AppDomain.CurrentDomain.BaseDirectory;
+			path += @"..\..\..\";
+			return Repopath = Path.GetFullPath(path);
+		}
+
 		public void ReloadDevices()
 		{
 			// Clear listBox_devices
@@ -519,7 +578,7 @@ namespace WAV_CUDA
 			UpdateInitLabel();
 		}
 
-		
+
 
 		private void button_export_Click(object sender, EventArgs e)
 		{
@@ -632,6 +691,76 @@ namespace WAV_CUDA
 
 			// Enable buttons
 			ToggleButtons("auto");
+		}
+
+		private void button_ppointer_Click(object sender, EventArgs e)
+		{
+			// If button_pppointer.Text == ">" and Stream is null: Set and Play
+			if (button_ppointer.Text == ">" || AuH.Stream == null)
+			{
+				// Get data from listBox_pointers index if available
+				if (listBox_pointers.SelectedIndex == -1)
+				{
+					MessageBox.Show("Please select a pointer first!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					return;
+				}
+
+				// Get data / stream from waveViewer_pointer
+				WaveStream stream = waveViewer_pointer.WaveStream;
+
+				// Set Stream and Play
+				AuH.Play(stream);
+
+				// Set button_pppointer.Text to "||"
+				button_ppointer.Text = "||";
+				return;
+			}
+			// If button_pppointer.Text == "||" and Stream is not null: Stop and Dispose
+			else if (button_ppointer.Text == "||" || AuH.Stream != null)
+			{
+				// Stop and Dispose Stream
+				AuH.Stop();
+				AuH.Current.Clear();
+
+				// Set button_pppointer.Text to ">"
+				button_ppointer.Text = ">";
+				return;
+			}
+		}
+
+		private void button_pfile_Click(object sender, EventArgs e)
+		{
+			// If button_pppointer.Text == ">" and Stream is null: Set and Play
+			if (button_pfile.Text == ">" || AuH.Stream == null)
+			{
+				// Get data from listBox_pointers index if available
+				if (listBox_files.SelectedIndex == -1)
+				{
+					MessageBox.Show("Please select a pointer first!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					return;
+				}
+
+				// Get data / stream from waveViewer_pointer
+				WaveStream stream = waveViewer_track.WaveStream;
+
+				// Set Stream and Play
+				AuH.Play(stream);
+
+				// Set button_pppointer.Text to "||"
+				button_pfile.Text = "||";
+				return;
+			}
+			// If button_pppointer.Text == "||" and Stream is not null: Stop and Dispose
+			else if (button_pfile.Text == "||" || AuH.Stream != null)
+			{
+				// Stop and Dispose Stream
+				AuH.Stop();
+				AuH.Current.Clear();
+
+				// Set button_pppointer.Text to ">"
+				button_pfile.Text = ">";
+				return;
+			}
 		}
 	}
 }

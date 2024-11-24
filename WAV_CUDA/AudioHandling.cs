@@ -9,7 +9,9 @@ namespace WAV_CUDA
 		// Attributes
 		public List<byte[]> Tracks = [];
 		public List<string> Names = [];
-
+		public WaveStream? Stream;
+		public List<byte[]> Current = [];
+		private WaveOutEvent? waveOut;
 
 		// Constructor
 		public AudioHandling()
@@ -17,12 +19,42 @@ namespace WAV_CUDA
 			// Empty
 		}
 
+		// Player methods
+		public void Play(WaveStream stream)
+		{
+			// Stop current stream
+			Stop();
+
+			// Set new stream
+			Stream = stream;
+
+			// Set new waveOut
+			waveOut = new WaveOutEvent();
+			waveOut.DeviceNumber = 0;
+			waveOut.Init(stream);
+			waveOut.Play();
+
+			// Dispose stream on playback end
+			waveOut.PlaybackStopped += (sender, e) =>
+			{
+				Stream = null;
+			};
+		}
+
+
+		public void Stop()
+		{
+			waveOut?.Stop();
+			waveOut = null;
+
+			Stream = null;
+		}
 
 		// Methods
 		public byte[] AddTrack(string path)
 		{
 			// Empty byte array
-			byte[] data = [];
+			byte[] data = Array.Empty<byte>();
 
 			// If paths extension is ".wav": Read WAV-File as byte[]
 			if (Path.GetExtension(path).ToLower() == ".wav")

@@ -12,7 +12,7 @@ namespace WAV_CUDA
 		public PrimaryContext? Context;
 		public CUdevice? Device;
 		public List<CUdeviceptr> DataPointers = [];
-		private Dictionary<CUdeviceptr, int> DataLengths = [];
+		public Dictionary<CUdeviceptr, int> DataLengths = [];
 
 		// Constructor
 		public CudaHandling(int device = -1, string name = "")
@@ -80,7 +80,7 @@ namespace WAV_CUDA
 		public List<string> GetDeviceNames()
 		{
 			// Get all devices & return their names
-			List<string> deviceNames = new List<string>();
+			List<string> deviceNames = [];
 			int deviceCount = PrimaryContext.GetDeviceCount();
 
 			for (int i = 0; i < deviceCount; i++)
